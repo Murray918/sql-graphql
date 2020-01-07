@@ -132,20 +132,14 @@ const getUser = async (_, { id }) => {
 	}
 }
 
-const createUser = async (_, input) => {
+const createUser = async (_, { input }) => {
 	try {
-		console.log(1111, input)
-		const { firstName, lastName, email } = input
 		const newUser = await models.User.create({
-			firstName,
-			lastName,
-			email
+			...input
 		})
-		console.log(2222, newUser)
-		const user = newUser.dataValues
-		console.log(3333, user)
+
 		return {
-			user: { ...user },
+			user: newUser,
 			success: true,
 			error: null
 		}
