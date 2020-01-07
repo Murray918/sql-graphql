@@ -78,10 +78,11 @@ const typeDefs = gql`
 	#update hobby
 	input UpdateHobby {
 		id: ID!
+		name: String
 	}
 
 	type UpdateHobbyPayload {
-		hobby: hobby
+		hobby: Hobby
 		success: Boolean!
 		error: String
 	}
@@ -92,6 +93,7 @@ const typeDefs = gql`
 		createUserHobby(input: CreateUserHobby): CreateUserHobbyPayload
 		createHobby(input: CreateHobby): CreateHobbyPayload
 		deleteUserHobby(input: DeleteUserHobby): DeleteUserHobbyPayload
+		updateHobby(input: UpdateHobby): UpdateHobbyPayload
 	}
 `
 
@@ -212,9 +214,9 @@ const destroyUserHobby = async (_, { input }) => {
 		if (!input) throw new Error('Invalid Query Input')
 
 		//find hobby for the message
-		const userHobbyToDelete = await models.UsersHobbies.findOne({
-			where: { ...input }
-		})
+		const userHobbyToDelete = await models.UsersHobbies.findByPk(
+			input.id.toString()
+		)
 
 		//do not run for no hobby found
 		if (userHobbyToDelete === null) throw new Error('No Hobby Found')
@@ -246,8 +248,13 @@ const destroyUserHobby = async (_, { input }) => {
 
 const updateHobby = async (_, { input }) => {
 	try {
-		const hobby = await models.Hobby.findOne({ where: { ...input } })
-		console.log(hobby)
+		const { id, name } = input
+		console.log(input)
+		const hobby = await models.Hobby.findByPk(id.toString())
+		hobby.name = name
+
+		const result = await hobby.save()
+		console.log(result)
 		return {
 			hobby,
 			success: true,
@@ -256,7 +263,7 @@ const updateHobby = async (_, { input }) => {
 	} catch (error) {
 		return {
 			hobby: null,
-			success: true,
+			success: false,
 			error: error.message
 		}
 	}
@@ -273,7 +280,7 @@ const Mutation = {
 	createUser: createUser,
 	createHobby: createHobby,
 	deleteUserHobby: destroyUserHobby,
-	updateHobbie: updateHobby
+	updateHobby: updateHobby
 }
 // Provide resolver functions for your schema fields
 const resolvers = {
@@ -283,23 +290,6 @@ const resolvers = {
 		hobbies: findUsersHobbies
 	}
 }
-
-const createTest = async () => {
-	try {
-		const newUser = models.User.create({
-			firstName: 'Max',
-			lastName: 'Holland',
-			email: 'caleb@caleb.caleb'
-		}).then(result => {
-			console.log(result)
-			return result
-		})
-		console.log(newUser)
-	} catch (error) {
-		throw Error(error)
-	}
-}
-// createTest()
 
 // instantiate express server
 const app = express()
