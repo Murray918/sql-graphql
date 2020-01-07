@@ -53,10 +53,22 @@ const typeDefs = gql`
 		error: String
 	}
 
+	#add hobby
+	input CreateHobby {
+		name: String
+	}
+
+	type CreateHobbyPayload {
+		hobby: Hobby
+		success: Boolean!
+		error: String
+	}
+
 	#mutations
 	type Mutation {
 		createUser(input: CreateUser): CreateUserPayload
 		createUserHobby(input: CreateUserHobby): CreateUserHobbyPayload
+		createHobby(input: CreateHobby): CreateHobbyPayload
 	}
 `
 
@@ -152,6 +164,25 @@ const createUser = async (_, { input }) => {
 	}
 }
 
+const createHobby = async (_, { input }) => {
+	try {
+		const hobby = await models.Hobby.create({
+			...input
+		})
+		return {
+			hobby,
+			success: true,
+			error: null
+		}
+	} catch (error) {
+		return {
+			hobby: null,
+			success: false,
+			error: error.message
+		}
+	}
+}
+
 const Query = {
 	users: getAllUsers,
 	hobbies: getAllHobbies,
@@ -160,7 +191,8 @@ const Query = {
 
 const Mutation = {
 	createUserHobby: createUsersHobbies,
-	createUser: createUser
+	createUser: createUser,
+	createHobby: createHobby
 }
 // Provide resolver functions for your schema fields
 const resolvers = {
