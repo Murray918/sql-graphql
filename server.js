@@ -64,11 +64,34 @@ const typeDefs = gql`
 		error: String
 	}
 
+	#remove hobby
+	input DeleteUserHobby {
+		id: ID!
+	}
+
+	type DeleteUserHobbyPayload {
+		hobbyMessage: String
+		success: Boolean!
+		error: String
+	}
+
+	#update hobby
+	input UpdateHobby {
+		id: ID!
+	}
+
+	type UpdateHobbyPayload {
+		hobby: hobby
+		success: Boolean!
+		error: String
+	}
+
 	#mutations
 	type Mutation {
 		createUser(input: CreateUser): CreateUserPayload
 		createUserHobby(input: CreateUserHobby): CreateUserHobbyPayload
 		createHobby(input: CreateHobby): CreateHobbyPayload
+		deleteUserHobby(input: DeleteUserHobby): DeleteUserHobbyPayload
 	}
 `
 
@@ -183,6 +206,62 @@ const createHobby = async (_, { input }) => {
 	}
 }
 
+const destroyUserHobby = async (_, { input }) => {
+	try {
+		// do not let destroy get called with nothing
+		if (!input) throw new Error('Invalid Query Input')
+
+		//find hobby for the message
+		const userHobbyToDelete = await models.UsersHobbies.findOne({
+			where: { ...input }
+		})
+
+		//do not run for no hobby found
+		if (userHobbyToDelete === null) throw new Error('No Hobby Found')
+
+		console.log(1111, userHobbyToDelete)
+		const { id, userId } = userHobbyToDelete
+
+		//delete the hobby
+		const hobby = await models.UsersHobbies.destroy({
+			where: { id: userHobbyToDelete.id }
+		})
+
+		//successful hobby delete message
+		const hobbyMessage = `Deleted UserHobby with Id ${id} from user ${userId}`
+
+		return {
+			hobbyMessage: hobbyMessage,
+			success: true,
+			error: null
+		}
+	} catch (error) {
+		return {
+			hobby: null,
+			success: false,
+			error: error.message
+		}
+	}
+}
+
+const updateHobby = async (_, { input }) => {
+	try {
+		const hobby = await models.Hobby.findOne({ where: { ...input } })
+		console.log(hobby)
+		return {
+			hobby,
+			success: true,
+			error: null
+		}
+	} catch (error) {
+		return {
+			hobby: null,
+			success: true,
+			error: error.message
+		}
+	}
+}
+
 const Query = {
 	users: getAllUsers,
 	hobbies: getAllHobbies,
@@ -192,7 +271,9 @@ const Query = {
 const Mutation = {
 	createUserHobby: createUsersHobbies,
 	createUser: createUser,
-	createHobby: createHobby
+	createHobby: createHobby,
+	deleteUserHobby: destroyUserHobby,
+	updateHobbie: updateHobby
 }
 // Provide resolver functions for your schema fields
 const resolvers = {
